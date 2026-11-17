@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Find Your Perfect Cruise Match | Shello Travels</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+  :root{
+    --sea:#1748A8;        /* page background */
+    --sea-deep:#0E3485;
+    --bubble:#3A82E0;     /* speech bubble */
+    --pill:#3F88E6;       /* answer pills */
+    --pill-hover:#4B93EE;
+    --yellow:#FFD12E;
+    --yellow-shadow:#D9A800;
+    --ink:#0B2A66;        /* text on yellow */
+    --white:#FFFFFF;
+    --soft:#DCE8FA;       /* secondary text on blue */
+    --error:#FFB4A8;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:radial-gradient(circle at 50% 0%, #2257BF 0%, var(--sea) 45%, var(--sea-deep) 100%);
+    font-family:'Poppins', system-ui, sans-serif;
+    color:var(--white);
+    display:flex; align-items:center; justify-content:center;
+    padding:28px 16px 40px;
+    overflow-x:hidden;
+  }
+  .display{ font-family:'Lilita One', 'Poppins', system-ui, sans-serif; font-weight:400; letter-spacing:.01em; }
+
+  /* ---------- background doodles ---------- */
+  .doodles{ position:fixed; inset:0; pointer-events:none; z-index:0; }
+  .doodles svg{ position:absolute; }
+  .sparkle{ animation:twinkle 2.6s ease-in-out infinite; transform-origin:center; transform-box:fill-box; }
+  .sparkle.s2{ animation-delay:.9s; } .sparkle.s3{ animation-delay:1.7s; }
+  @keyframes twinkle{ 0%,100%{ opacity:1; transform:scale(1);} 50%{ opacity:.35; transform:scale(.7);} }
+  .doodle-ship{ animation:sail 5s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+  @keyframes sail{ 0%,100%{ transform:translate(0,0) rotate(-3deg);} 50%{ transform:translate(4px,-3px) rotate(3deg);} }
+
+  .app{ width:100%; max-width:440px; position:relative; z-index:1; }
+  .stage{ perspective:1200px; }
+
+  /* ---------- progress route ---------- */
+  .route{ display:flex; align-items:center; justify-content:center; gap:10px; margin:10px 0 26px; }
+  .island{ width:14px;height:14px;border-radius:50%; background:transparent; border:2px solid var(--soft); transition:all .35s ease; flex:none; position:relative; }
+  .island.done{ background:var(--yellow); border-color:var(--yellow); }
+  .island.current{ background:var(--yellow); border-color:var(--white); transform:scale(1.3); }
+  .dots-line{ flex:1; height:0; border-top:2px dashed rgba(220,232,250,.45); max-width:28px; }
+  .dots-line.done{ border-top:2px solid var(--yellow); }
+  .island.current::after{
+    content:"⛵"; position:absolute; left:50%; top:-24px; font-size:15px;
+    transform:translateX(-50%); animation:bob 1.8s ease-in-out infinite;
+  }
+  @keyframes bob{ 0%,100%{ transform:translateX(-50%) translateY(0) rotate(-4deg);} 50%{ transform:translateX(-50%) translateY(-4px) rotate(4deg);} }
+
+  /* ---------- screens (flip targets) ---------- */
+  .card{ backface-visibility:hidden; transform-origin:center; text-align:center; }
+  .card.rise{ animation:rise .5s ease; }
+  @keyframes rise{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+  .card.flip-out{ animation:flipOutFwd .26s ease-in forwards; }
+  .card.flip-in{ animation:flipInFwd .32s ease-out; }
+  .card.flip-out-back{ animation:flipOutBack .26s ease-in forwards; }
+  .card.flip-in-back{ animation:flipInBack .32s ease-out; }
+  @keyframes flipOutFwd{ to{ transform:rotateY(-90deg) scale(.96); opacity:.6; } }
+  @keyframes flipInFwd{ from{ transform:rotateY(90deg) scale(.96); opacity:.6; } to{ transform:rotateY(0) scale(1); opacity:1; } }
+  @keyframes flipOutBack{ to{ transform:rotateY(90deg) scale(.96); opacity:.6; } }
+  @keyframes flipInBack{ from{ transform:rotateY(-90deg) scale(.96); opacity:.6; } to{ transform:rotateY(0) scale(1); opacity:1; } }
+
+  /* ---------- speech bubble ---------- */
+  .bubble{
+    position:relative;
+    background:var(--bubble);
+    border:5px solid var(--yellow);
+    border-radius:30px;
+    padding:30px 24px 28px;
+    box-shadow:8px 9px 0 rgba(8,32,92,.55);
+    margin:0 4px 34px;
+  }
+  .bubble::after{             /* tail */
+    content:""; position:absolute; left:50%; bottom:-19px;
+    width:30px; height:30px; background:var(--bubble);
+    border-right:5px solid var(--yellow); border-bottom:5px solid var(--yellow);
+    transform:translateX(-50%) rotate(45deg); border-bottom-right-radius:6px;
+  }
+  .quote-mark{
+    position:absolute; top:-30px; left:14px;
+    font-family:'Lilita One', sans-serif; font-size:78px; line-height:1;
+    color:var(--yellow); text-shadow:3px 3px 0 rgba(8,32,92,.4);
+  }
+  .eyebrow{ font-family:'Lilita One', sans-serif; font-size:24px; color:var(--yellow); margin-bottom:8px; text-shadow:2px 2px 0 rgba(8,32,92,.35); }
+  .title{ font-family:'Lilita One', sans-serif; font-size:34px; line-height:1.1; color:var(--yellow); margin:0 0 12px; text-shadow:3px 3px 0 rgba(8,32,92,.35); font-weight:400; }
+  .question{ font-size:21px; line-height:1.35; font-weight:600; margin:0; color:var(--white); }
+  .lede{ color:var(--soft); font-size:15px; line-height:1.55; margin:0 0 22px; }
+
+  /* ---------- answer pills ---------- */
+  .opt{
+    display:flex; align-items:center; gap:14px; width:100%;
+    background:var(--pill); color:var(--white);
+    border:3px solid transparent; border-radius:22px;
+    padding:12px 18px 12px 12px; margin-bottom:12px;
+    font-family:'Poppins', sans-serif; font-size:15.5px; font-weight:500; line-height:1.3; text-align:left;
+    cursor:pointer; box-shadow:4px 5px 0 rgba(8,32,92,.45);
+    transition:transform .12s ease, border-color .2s ease, background .2s ease;
+  }
+  .opt:hover{ background:var(--pill-hover); border-color:rgba(255,209,46,.6); }
+  .opt:active{ transform:scale(.98); }
+  .badge{
+    flex:none; width:34px; height:34px; border-radius:50%;
+    background:var(--yellow); color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Lilita One', sans-serif; font-size:19px; line-height:1;
+    box-shadow:inset 0 -2px 0 var(--yellow-shadow);
+  }
+  .opt.selected{ border-color:var(--yellow); }
+  .opt.picked{ border-color:var(--yellow); background:var(--pill-hover); animation:pick .25s ease; }
+  .opt.picked .badge{ animation:badgePop .35s ease; }
+  @keyframes pick{ 50%{ transform:scale(1.03);} }
+  @keyframes badgePop{ 50%{ transform:scale(1.3) rotate(-12deg);} }
+
+  /* ---------- buttons, form ---------- */
+  .primary-btn{
+    display:inline-block; width:100%;
+    background:var(--yellow); color:var(--ink); border:none;
+    border-radius:18px; padding:15px 24px;
+    font-family:'Lilita One', sans-serif; font-size:20px; letter-spacing:.02em;
+    cursor:pointer; box-shadow:0 5px 0 var(--yellow-shadow);
+    transition:transform .1s ease, box-shadow .1s ease, filter .2s ease;
+  }
+  .primary-btn:hover{ filter:brightness(1.05); }
+  .primary-btn:active{ transform:translateY(4px); box-shadow:0 1px 0 var(--yellow-shadow); }
+  .primary-btn:disabled{ opacity:.6; cursor:default; }
+
+  .field{
+    display:block; width:100%; background:var(--white); color:var(--ink);
+    border:3px solid transparent; border-radius:16px; padding:13px 16px; margin-bottom:10px;
+    font-family:'Poppins', sans-serif; font-size:16px;
+  }
+  .field::placeholder{ color:#6B7FA6; }
+  .field:focus{ outline:none; border-color:var(--yellow); }
+  .field.error{ border-color:var(--error); }
+  .consent{ display:flex; gap:10px; align-items:flex-start; text-align:left; font-size:13px; color:var(--soft); line-height:1.45; margin:6px 0 16px; }
+  .consent input{ margin-top:3px; accent-color:var(--yellow); flex:none; width:16px; height:16px; }
+  .form-error{ color:var(--error); font-size:13px; margin:-4px 0 12px; min-height:1em; font-weight:600; }
+
+  /* ---------- result ---------- */
+  .result-emoji{ font-size:54px; margin-bottom:4px; display:inline-block; }
+  .result-tag{
+    display:inline-block; background:var(--yellow); color:var(--ink);
+    border-radius:999px; padding:5px 16px; margin-bottom:12px;
+    font-family:'Lilita One', sans-serif; font-size:15px; letter-spacing:.04em;
+  }
+  .result-body{ color:var(--white); font-size:14.5px; line-height:1.6; text-align:left; margin:12px 0 16px; }
+  .sent-note{ background:rgba(8,32,92,.28); border-radius:16px; padding:14px 16px; font-size:14px; line-height:1.5; text-align:left; margin-bottom:18px; color:var(--soft); }
+  .sent-note b{ color:var(--yellow); }
+
+  .secondary-link{ display:block; width:100%; margin-top:6px; color:var(--soft); font-size:14px; text-decoration:underline; cursor:pointer; background:none; border:none; font-family:inherit; }
+  .secondary-link:hover{ color:var(--yellow); }
+  .bubble .secondary-link{ margin-top:14px; }
+  .footer-note{ text-align:center; color:var(--soft); font-size:12px; margin-top:6px; line-height:1.5; }
+  .hidden{ display:none !important; }
+
+  /* ---------- bubbles + pops ---------- */
+  .bubble-fx{
+    position:fixed; border-radius:50%; pointer-events:none; z-index:50;
+    border:2px solid rgba(255,255,255,.85); background:rgba(255,209,46,.18);
+    animation:bubbleUp var(--dur,.9s) ease-out forwards;
+  }
+  @keyframes bubbleUp{
+    from{ transform:translate(0,0) scale(.4); opacity:1; }
+    to{ transform:translate(var(--dx),var(--dy)) scale(1); opacity:0; }
+  }
+  .pop{ animation:pop .6s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pop{ from{ transform:scale(0) rotate(-20deg);} to{ transform:scale(1) rotate(0);} }
+  .wiggle{ display:inline-block; animation:wiggle 2.4s ease-in-out infinite; }
+  @keyframes wiggle{ 0%,80%,100%{ transform:rotate(0);} 85%{ transform:rotate(-12deg);} 90%{ transform:rotate(10deg);} 95%{ transform:rotate(-6deg);} }
+
+  @media (prefers-reduced-motion: reduce){
+    .card, .card.rise, .pop, .wiggle, .opt.picked, .opt.picked .badge, .island.current::after, .sparkle, .doodle-ship{ animation:none !important; }
+    .opt, .island, .dots-line{ transition:none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- background doodles -->
+<div class="doodles" aria-hidden="true">
+  <!-- dashed route + ship, top left -->
+  <svg width="220" height="120" viewBox="0 0 220 120" style="top:10px;left:-10px;">
+    <path d="M10,20 C40,70 70,90 100,60 C120,40 140,30 175,45" fill="none" stroke="#DCE8FA" stroke-opacity=".6" stroke-width="2" stroke-dasharray="6 6" stroke-linecap="round"/>
+    <g class="doodle-ship">
+      <path d="M180,46 l26,-4 l-4,7 l-24,2 z" fill="#FFFFFF" fill-opacity=".85"/>
+      <rect x="186" y="37" width="12" height="6" rx="1.5" fill="#FFFFFF" fill-opacity=".85"/>
+      <rect x="190" y="32" width="5" height="5" rx="1" fill="#FFFFFF" fill-opacity=".85"/>
+    </g>
+  </svg>
+  <!-- sparkles + circles -->
+  <svg width="40" height="40" viewBox="0 0 40 40" style="top:70px;right:22px;"><path class="sparkle" d="M20 2 C22 14 26 18 38 20 C26 22 22 26 20 38 C18 26 14 22 2 20 C14 18 18 14 20 2 Z" fill="#FFD12E"/></svg>
+  <svg width="26" height="26" viewBox="0 0 40 40" style="top:46%;left:14px;"><path class="sparkle s2" d="M20 2 C22 14 26 18 38 20 C26 22 22 26 20 38 C18 26 14 22 2 20 C14 18 18 14 20 2 Z" fill="#FFD12E"/></svg>
+  <svg width="22" height="22" viewBox="0 0 40 40" style="bottom:18%;right:16px;"><path class="sparkle s3" d="M20 2 C22 14 26 18 38 20 C26 22 22 26 20 38 C18 26 14 22 2 20 C14 18 18 14 20 2 Z" fill="#FFFFFF" fill-opacity=".9"/></svg>
+  <svg width="14" height="14" viewBox="0 0 14 14" style="top:120px;right:70px;"><circle cx="7" cy="7" r="5" fill="none" stroke="#DCE8FA" stroke-opacity=".7" stroke-width="1.5"/></svg>
+  <svg width="12" height="12" viewBox="0 0 14 14" style="top:34%;right:30px;"><circle cx="7" cy="7" r="5" fill="none" stroke="#DCE8FA" stroke-opacity=".7" stroke-width="1.5"/></svg>
+  <svg width="10" height="10" viewBox="0 0 14 14" style="bottom:30%;left:30px;"><circle cx="7" cy="7" r="5" fill="#FFD12E"/></svg>
+  <!-- faint ship wheel, bottom right -->
+  <svg width="170" height="170" viewBox="0 0 100 100" style="bottom:-40px;right:-40px;opacity:.13;">
+    <g fill="none" stroke="#FFFFFF" stroke-width="3">
+      <circle cx="50" cy="50" r="30"/><circle cx="50" cy="50" r="9"/>
+      <path d="M50 4 V96 M4 50 H96 M17 17 L83 83 M83 17 L17 83"/>
+    </g>
+  </svg>
+  <!-- faint anchor, bottom left -->
+  <svg width="90" height="90" viewBox="0 0 100 100" style="bottom:40px;left:-14px;opacity:.13;">
+    <g fill="none" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round">
+      <circle cx="50" cy="16" r="8"/><path d="M50 24 V88 M32 40 H68 M18 62 C22 82 40 88 50 88 C60 88 78 82 82 62"/>
+    </g>
+  </svg>
+</div>
+
+<div class="app stage">
+
+  <div class="route" id="route"></div>
+
+  <!-- INTRO -->
+  <div class="card rise" id="screen-intro">
+    <div class="bubble">
+      <div class="quote-mark">&rdquo;</div>
+      <div class="result-emoji"><span class="wiggle">🎁</span></div>
+      <h1 class="title">Quiz Time!</h1>
+      <p class="question" style="margin-bottom:10px;">Find your perfect cruise match</p>
+      <p class="lede">A little gift for the grown-ups: 5 quick questions about your vibe, your pace, and your budget. We'll match you to the cruise line that fits and email you your result.</p>
+      <button class="primary-btn" onclick="startQuiz()">Let's Go! &rarr;</button>
+    </div>
+  </div>
+
+  <!-- QUESTIONS -->
+  <div class="card hidden" id="screen-quiz">
+    <div class="bubble">
+      <div class="quote-mark">&rdquo;</div>
+      <div class="eyebrow" id="q-label"></div>
+      <h1 class="question" id="q-text"></h1>
+    </div>
+    <div id="q-options"></div>
+    <button class="secondary-link hidden" id="q-back" onclick="goBack()">&larr; Back</button>
+  </div>
+
+  <!-- EMAIL GATE -->
+  <div class="card hidden" id="screen-email">
+    <div class="bubble">
+      <div class="quote-mark">&rdquo;</div>
+      <div class="result-emoji">🐚</div>
+      <h1 class="title">Your match is ready!</h1>
+      <p class="lede">Where should we send it? You'll see it right away, and a copy lands in your inbox.</p>
+      <form id="email-form" novalidate>
+        <input class="field" type="text" id="f-name" placeholder="Your first name" autocomplete="given-name">
+        <input class="field" type="email" id="f-email" placeholder="Your email address" autocomplete="email">
+        <label class="consent">
+          <input type="checkbox" id="f-consent">
+          <span>Send me my result plus cruise tips and offers from Shello Travels. Unsubscribe anytime.</span>
+        </label>
+        <div class="form-error" id="form-error"></div>
+        <button class="primary-btn" type="submit" id="submit-btn">See My Match</button>
+      </form>
+      <button class="secondary-link" onclick="goBack()">&larr; Back to my answers</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="card hidden" id="screen-result">
+    <div class="bubble">
+      <div class="quote-mark">&rdquo;</div>
+      <div class="result-emoji" id="r-emoji"></div><br>
+      <div class="result-tag" id="r-tag"></div>
+      <h1 class="title" id="r-title"></h1>
+      <div class="result-body" id="r-body"></div>
+      <div class="sent-note" id="sent-note"></div>
+      <a class="primary-btn" id="r-cta" style="text-decoration:none;" href="sms:+16465438104">Text me. Let's chat about your trip</a>
+      <button class="secondary-link" onclick="restart()">Take it again</button>
+    </div>
+  </div>
+
+  <p class="footer-note">Shello Travels &middot; Free, no-obligation 15-minute cruise planning calls.</p>
+</div>
+
+<script>
+/* ============================================================
+   EMAILJS SETTINGS — paste your 3 values from EmailJS here
+   ============================================================ */
+const EMAILJS_PUBLIC_KEY  = "owZRhAPY1OoKW-QSb";
+const EMAILJS_SERVICE_ID  = "service_vzctwhm";
+const EMAILJS_TEMPLATE_ID = "template_b6thk8v";
+
+const BUSINESS_EMAIL = "shellotravels@gmail.com";
+const BUSINESS_PHONE = "+16465438104"; // Google Voice — texts for planning calls
+
+/* ============================================================
+   QUESTIONS — each answer adds points to one or more cruise lines.
+   Question 1 also rules lines out: Virgin Voyages is adults-only (18+),
+   so it's never shown to families bringing kids, and "no kids on the
+   ship at all" always matches Virgin Voyages.
+   ============================================================ */
+const questions = [
+  {
+    q: "Who's coming on this trip?",
+    options: [
+      { label: "The whole family, kids and all", emoji: "👨‍👩‍👧", pts: { disney: 2, royal: 1, carnival: 1 }, kids: true },
+      { label: "Just the grown-ups, but other kids on board are fine", emoji: "🧳", pts: { royal: 2, carnival: 2, vv: 1 }, kids: false },
+      { label: "Grown-ups only. No kids on the ship at all!", emoji: "🥂", pts: { vv: 3 }, kids: false, adultsOnly: true }
+    ]
+  },
+  {
+    q: "What's your dream vacation vibe?",
+    options: [
+      { label: "Magical and storybook", emoji: "✨", pts: { disney: 3 } },
+      { label: "Thrills and non-stop action", emoji: "🎢", pts: { royal: 3 } },
+      { label: "Laid-back fun, no fuss", emoji: "🏖️", pts: { carnival: 3 } },
+      { label: "Stylish and a little bit fancy", emoji: "💅🏾", pts: { vv: 3, disney: 1 } }
+    ]
+  },
+  {
+    q: "Pick your pace",
+    options: [
+      { label: "Pack every day with something to do", emoji: "⚡", pts: { royal: 2, disney: 1 } },
+      { label: "A mix of activities and pool time", emoji: "🌊", pts: { carnival: 2, disney: 1 } },
+      { label: "Sleep in, brunch, spa, repeat", emoji: "🧖🏾‍♀️", pts: { vv: 2, carnival: 1 } }
+    ]
+  },
+  {
+    q: "Your perfect night on board?",
+    options: [
+      { label: "A Broadway-style show the whole family loves", emoji: "🎭", pts: { disney: 2, royal: 1 } },
+      { label: "A big production show, then late-night fun", emoji: "🎆", pts: { royal: 2, carnival: 1 } },
+      { label: "Comedy club and a casual dinner", emoji: "😂", pts: { carnival: 2 } },
+      { label: "Chef-driven dinner, then a dance party", emoji: "🍸", pts: { vv: 2 } }
+    ]
+  },
+  {
+    q: "What's the budget feeling?",
+    options: [
+      { label: "Best bang for my buck", emoji: "💵", pts: { carnival: 3 } },
+      { label: "Mid-range, worth it for the right ship", emoji: "⚖️", pts: { royal: 2, vv: 1 } },
+      { label: "It's a special trip. Let's splurge!", emoji: "💎", pts: { disney: 2, vv: 2 } }
+    ]
+  }
+];
+
+/* ============================================================
+   RESULTS
+   ============================================================ */
+const results = {
+  disney: {
+    emoji: "🏰",
+    tag: "Disney Cruise Line",
+    title: "Your Match: Disney Cruise Line",
+    body: "You want the magic. Disney is the most family-focused line at sea: character moments, Broadway-style shows, kids' clubs the little ones won't want to leave, and Disney's own private island stop. It's a splurge, but it's the trip they'll talk about for years.",
+    email: "You want the magic. Disney Cruise Line is the most family-focused line at sea: character moments, Broadway-style shows, kids' clubs the little ones won't want to leave, and Disney's own private island stop. It's a splurge, but it's the trip they'll talk about for years."
+  },
+  royal: {
+    emoji: "🎢",
+    tag: "Royal Caribbean",
+    title: "Your Match: Royal Caribbean",
+    body: "You want something for everyone, all day long. Royal Caribbean's big ships are floating adventure parks: water slides, rock climbing walls, surf simulators, ice shows, and their private island, Perfect Day at CocoCay. It's great for mixed ages and anyone who hates sitting still.",
+    email: "You want something for everyone, all day long. Royal Caribbean's big ships are floating adventure parks: water slides, rock climbing walls, surf simulators, ice shows, and their private island, Perfect Day at CocoCay. It's great for mixed ages and anyone who hates sitting still."
+  },
+  carnival: {
+    emoji: "🎉",
+    tag: "Carnival Cruise Line",
+    title: "Your Match: Carnival",
+    body: "You want easy, affordable fun. Carnival is the 'Fun Ships' line: water parks, comedy clubs, casual dining, and lots of short 3–5 night sailings from ports all over the U.S. It's the best value at sea, and a great first cruise.",
+    email: "You want easy, affordable fun. Carnival is the 'Fun Ships' line: water parks, comedy clubs, casual dining, and lots of short 3-5 night sailings from ports all over the U.S. It's the best value at sea, and a great first cruise."
+  },
+  vv: {
+    emoji: "🥂",
+    tag: "Virgin Voyages",
+    title: "Your Match: Virgin Voyages",
+    body: "You deserve a grown-up getaway. Virgin Voyages is adults-only (18+), with a boutique-hotel feel, chef-driven restaurants instead of a buffet, a great spa, and real nightlife. It's perfect for a couples trip or a girls' trip while the little one has a sleepover at Grandma's.",
+    email: "You deserve a grown-up getaway. Virgin Voyages is adults-only (18+), with a boutique-hotel feel, chef-driven restaurants instead of a buffet, a great spa, and real nightlife. It's perfect for a couples trip or a girls' trip while the little one has a sleepover at Grandma's."
+  }
+};
+
+/* Tie-breaker order when scores are equal */
+const TIE_ORDER = ["disney", "royal", "carnival", "vv"];
+
+let current = 0;
+let answers = [];   // the option picked for each question, in order
+let resultKey;
+let animating = false;
+const REDUCED_MOTION = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function visibleCard(){ return document.querySelector(".card:not(.hidden)"); }
+
+/* Flip the visible card out, run update(), flip the new card in. dir = "fwd" or "back" */
+function swap(dir, update){
+  if (REDUCED_MOTION){ update(); return; }
+  if (animating) return;
+  animating = true;
+  const out = visibleCard();
+  out.classList.remove("rise");
+  out.classList.add(dir === "back" ? "flip-out-back" : "flip-out");
+  setTimeout(() => {
+    out.classList.remove("flip-out", "flip-out-back");
+    update();
+    const inc = visibleCard();
+    inc.classList.add(dir === "back" ? "flip-in-back" : "flip-in");
+    setTimeout(() => { inc.classList.remove("flip-in", "flip-in-back"); animating = false; }, 330);
+  }, 260);
+}
+
+function bubbles(x, y, count){
+  if (REDUCED_MOTION) return;
+  for (let i = 0; i < count; i++){
+    const b = document.createElement("span");
+    const size = 6 + Math.random() * 12;
+    b.className = "bubble-fx";
+    b.style.width = b.style.height = size + "px";
+    b.style.left = (x - size / 2) + "px";
+    b.style.top = (y - size / 2) + "px";
+    b.style.setProperty("--dx", (Math.random() * 120 - 60) + "px");
+    b.style.setProperty("--dy", (-60 - Math.random() * 110) + "px");
+    b.style.setProperty("--dur", (0.7 + Math.random() * 0.5) + "s");
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), 1300);
+  }
+}
+
+function burstFrom(el, count){
+  const r = el.getBoundingClientRect();
+  bubbles(r.left + r.width / 2, r.top + r.height / 2, count);
+}
+
+function show(id){
+  ["screen-intro","screen-quiz","screen-email","screen-result"].forEach(s =>
+    document.getElementById(s).classList.toggle("hidden", s !== id));
+  document.getElementById("route").classList.toggle("hidden", id !== "screen-quiz");
+}
+
+function renderRoute(){
+  const route = document.getElementById("route");
+  route.innerHTML = "";
+  for (let i = 0; i < questions.length; i++){
+    const dot = document.createElement("div");
+    dot.className = "island" + (i < current ? " done" : i === current ? " current" : "");
+    route.appendChild(dot);
+    if (i < questions.length - 1){
+      const line = document.createElement("div");
+      line.className = "dots-line" + (i < current ? " done" : "");
+      route.appendChild(line);
+    }
+  }
+}
+
+function startQuiz(){
+  swap("fwd", () => {
+    current = 0;
+    answers = [];
+    show("screen-quiz");
+    renderRoute();
+    renderQuestion();
+  });
+}
+
+function renderQuestion(){
+  const q = questions[current];
+  document.getElementById("q-label").textContent = `Question ${current + 1} of ${questions.length}`;
+  document.getElementById("q-text").textContent = q.q;
+  const wrap = document.getElementById("q-options");
+  wrap.innerHTML = "";
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "opt" + (answers[current] === opt ? " selected" : "");
+    btn.innerHTML = `<span class="badge">${"abcdef"[i]}</span><span class="opt-label">${opt.label}</span>`;
+    btn.onclick = (e) => selectOption(opt, btn, e);
+    wrap.appendChild(btn);
+  });
+  document.getElementById("q-back").classList.toggle("hidden", current === 0);
+}
+
+function selectOption(opt, btn, e){
+  if (animating) return;
+  answers[current] = opt;
+  answers.length = current + 1;   // later answers must be picked again (no skipping ahead)
+  btn.classList.add("picked");
+  const x = e && e.clientX ? e.clientX : null;
+  if (x !== null) bubbles(e.clientX, e.clientY, 9); else burstFrom(btn, 9);
+  setTimeout(() => {
+    swap("fwd", () => {
+      current++;
+      if (current < questions.length){
+        renderRoute();
+        renderQuestion();
+      } else {
+        resultKey = pickResult();
+        show("screen-email");
+      }
+    });
+  }, REDUCED_MOTION ? 0 : 220);
+}
+
+function goBack(){
+  if (animating) return;
+  const fromEmail = !document.getElementById("screen-email").classList.contains("hidden");
+  swap("back", () => {
+    // From the email screen, return to the last question; otherwise step back one question
+    if (fromEmail) current = questions.length - 1;
+    else if (current > 0) current--;
+    show("screen-quiz");
+    renderRoute();
+    renderQuestion();
+  });
+}
+
+function pickResult(){
+  const scores = { disney: 0, royal: 0, carnival: 0, vv: 0 };
+  answers.forEach(a => { for (const k in a.pts) scores[k] += a.pts[k]; });
+  const first = answers[0];
+  if (first.adultsOnly) return "vv"; // Virgin Voyages is the only adults-only line of the four
+  const allowed = TIE_ORDER.filter(k => !(first.kids === true && k === "vv")); // VV is adults-only
+  let best = allowed[0];
+  allowed.forEach(k => { if (scores[k] > scores[best]) best = k; });
+  return best;
+}
+
+function showResult(name, emailSent){
+  const r = results[resultKey];
+  document.getElementById("r-emoji").textContent = r.emoji;
+  document.getElementById("r-tag").textContent = r.tag;
+  document.getElementById("r-title").textContent = r.title;
+  document.getElementById("r-body").textContent = r.body;
+  document.getElementById("sent-note").innerHTML = emailSent
+    ? `<b>Check your inbox, ${escapeHtml(name)}!</b> We just emailed you your match. Want help finding the right sailing and dates? Book a free 15-minute planning call. No pressure, no obligation.`
+    : `Want help finding the right sailing and dates? Book a free 15-minute planning call. No pressure, no obligation.`;
+  const text = encodeURIComponent(`Hi Sherene! I just took the cruise quiz and my match was ${r.tag}. I'd love to book a free planning call.`);
+  document.getElementById("r-cta").href = `sms:${BUSINESS_PHONE}?&body=${text}`; // "?&body=" works on iPhone and Android
+  swap("fwd", () => show("screen-result"));
+  // pop the emoji and burst bubbles once the card has flipped in
+  setTimeout(() => {
+    const em = document.getElementById("r-emoji");
+    em.classList.remove("pop"); void em.offsetWidth; em.classList.add("pop");
+    burstFrom(em, 22);
+  }, REDUCED_MOTION ? 0 : 300);
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+
+function emailJsReady(){
+  return typeof emailjs !== "undefined" &&
+    !EMAILJS_PUBLIC_KEY.startsWith("YOUR_") &&
+    !EMAILJS_SERVICE_ID.startsWith("YOUR_") &&
+    !EMAILJS_TEMPLATE_ID.startsWith("YOUR_");
+}
+
+document.getElementById("email-form").addEventListener("submit", async function(e){
+  e.preventDefault();
+  const nameEl = document.getElementById("f-name");
+  const emailEl = document.getElementById("f-email");
+  const consentEl = document.getElementById("f-consent");
+  const errEl = document.getElementById("form-error");
+  const name = nameEl.value.trim();
+  const email = emailEl.value.trim();
+
+  nameEl.classList.toggle("error", !name);
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  emailEl.classList.toggle("error", !emailOk);
+  if (!name || !emailOk){ errEl.textContent = "Please add your first name and a valid email."; return; }
+  if (!consentEl.checked){ errEl.textContent = "Please tick the box so we can send your result."; return; }
+  errEl.textContent = "";
+
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+
+  let sent = false;
+  if (emailJsReady()){
+    const r = results[resultKey];
+    try {
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_name: name,
+        to_email: email,
+        result_line: r.tag,
+        result_text: r.email
+      }, { publicKey: EMAILJS_PUBLIC_KEY });
+      sent = true;
+    } catch(err){
+      console.warn("EmailJS send failed:", err);
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = "See My Match";
+  showResult(name, sent); // result always shows, even if the email fails
+});
+
+function restart(){
+  document.getElementById("email-form").reset();
+  swap("back", () => show("screen-intro"));
+}
+
+show("screen-intro");
+</script>
+</body>
+</html>
